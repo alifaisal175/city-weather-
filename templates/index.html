@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Weather Now</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f4f7fa;
+        color: #14212b;
+        margin: 0;
+      }
+      main {
+        max-width: 480px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+      h1 {
+        margin: 0 0 20px;
+      }
+      .search {
+        display: flex;
+        gap: 8px;
+      }
+      input {
+        flex: 1;
+        padding: 14px;
+        font-size: 16px;
+        border: 1px solid #ccd6de;
+        border-radius: 10px;
+      }
+      button {
+        padding: 0 20px;
+        font-size: 16px;
+        border: 0;
+        border-radius: 10px;
+        background: #14212b;
+        color: #fff;
+        cursor: pointer;
+      }
+      #error {
+        color: #d33;
+        margin-top: 16px;
+      }
+      #panel {
+        display: none;
+        margin-top: 24px;
+        padding: 28px 24px;
+        border-radius: 20px;
+        color: #fff;
+        background: #3b82f6;
+      }
+      #temp {
+        font-size: 90px;
+        font-weight: bold;
+        line-height: 1;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Weather Now</h1>
+      <div class="search">
+        <input
+          id="q"
+          placeholder="Enter a city, e.g. Bengaluru"
+          onkeydown="if (event.key === 'Enter') getWeather();"
+        />
+        <button onclick="getWeather()">Search</button>
+      </div>
+      <div id="error"></div>
+      <div id="panel">
+        <div id="place"></div>
+        <div id="temp"></div>
+        <div id="wind"></div>
+      </div>
+    </main>
+
+    <script>
+      function colorFor(t) {
+        const c = Math.max(-5, Math.min(42, t));
+        const hue = 215 - ((c + 5) / 47) * 205;
+        return `hsl(${hue}, 65%, 38%)`;
+      }
+
+      async function getWeather() {
+        const loc = document.getElementById("q").value.trim();
+        const error = document.getElementById("error");
+        const panel = document.getElementById("panel");
+        error.textContent = "";
+        panel.style.display = "none";
+
+        if (!loc) {
+          error.textContent = "Enter a location first.";
+          return;
+        }
+
+        try {
+          const res = await fetch(
+            "/weather?location=" + encodeURIComponent(loc),
+          );
+          const data = await res.json();
+
+          if (data.error) {
+            error.textContent = data.error;
+            return;
+          }
+
+          document.getElementById("place").textContent = [
+            data.place,
+            data.region,
+            data.country,
+          ]
+            .filter(Boolean)
+            .join(", ");
+          document.getElementById("temp").textContent =
+            data.temperature + data.temp_unit;
+          document.getElementById("wind").textContent =
+            "Wind: " + data.wind + " " + data.wind_unit;
+          panel.style.background = colorFor(data.temperature);
+          panel.style.display = "block";
+        } catch (e) {
+          error.textContent = "Could not reach the server. Is app.py running?";
+        }
+      }
+    </script>
+  </body>
+</html>
